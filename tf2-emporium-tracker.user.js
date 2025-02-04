@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      03.02.2025
+// @version      05.02.2025
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/sharedfiles/filedetails/*
@@ -102,7 +102,9 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
     }
 
     window.flagItem = function ($profile) {
-        $profile.css('background', 'rgba(255, 0, 0, 0.4)')
+        $profile.css('background', 'rgb(100, 0, 0)')
+        $profile.css('opacity', '0.4')
+        $profile.css('border', 'solid 1px red')
     }
     window.flagCreator = function ($profile) {
         $profile.css('background', 'rgba(255, 0, 0, 0.2)')
@@ -164,7 +166,7 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
                         window.cache(user_url, true)
                         window.cache(current_url, true)
                     } else {
-                        console.log('Found a legit creator, skipping him.')
+                        console.log('(cached user) Found a legit creator, skipping him.')
                     }
 
                     continue
@@ -271,13 +273,18 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         }
     };
 
-    (async () => {
+    await (async () => {
         const is_workshop = workshop_regex.test(current_url)
+        const original_title = document.title
+
+        document.title = `${original_title} | Checking On Emporium Members...`
 
         if (is_workshop) {
             await checkWorkshop()
         } else {
             await flagIfEmporiumMember()
         }
+
+        document.title = `${original_title} | Done.`
     })()
 })();
