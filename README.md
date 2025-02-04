@@ -5,7 +5,7 @@ A browser extension that notifies you if a TF2 Workshop item contains a member o
 ### How to Install
 
 - Install [Tampermonkey](https://www.tampermonkey.net/)
-- Install [TF2 Emporium Tracker](https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/tf2-emporium-tracker.js)
+- Install [TF2 Emporium Tracker](https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/tf2-emporium-tracker.user.js)
 
 ### How can I help?
 
