@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      05.02.2025 18:02
+// @version      05.02.2025 23:35
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/sharedfiles/filedetails/*
@@ -10,7 +10,8 @@
 // @grant        none
 // ==/UserScript==
 
-const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/emporium-members.json';
+const workshop_item_notification_html = `<div class="detailBox altFooter"><div class="workshopItemDescriptionTitle" style="font-family: Consolas;color: white;font-size: 20px;display: flex;"><span style="text-align: center;">This workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.</span></div><div class="workshopItemDescription" id="highlightContent"><div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop" href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885"><img src="https://media.discordapp.net/attachments/1336010797603618850/1336658391120085002/drew_and_meta_ban_announcement.png?ex=67a49ba2&amp;is=67a34a22&amp;hm=dd5a9648c64d25c50ca5bf8d5ba77e4eeeeadacb55dfd8259413100d538579cc&amp;=&amp;format=webp&amp;quality=lossless"></a></div><br><a href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885" style=" display: flex;justify-content: space-around;font-size: 20px; color: skyblue; text-decoration: underline;font-family: Consolas;">Discord Hyperlink to channel.</a><br><a href="https://www.youtube.com/@BigBoiGames" style="display: flex;justify-content: space-around;font-size: 20px; color: white;text-decoration: underline;font-family: Consolas;">Videos by BigBoiGames.</a><br><div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=nHGXvEFaA2o&amp;t" rel="" title="I made a video exposing the TF2 Workshop Monopoly. They responded."><img src="https://i.ytimg.com/vi/nHGXvEFaA2o/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLD_cpuyiuVcVMnYciWcEfh2Yxrd3w"></a><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=tJ0u4dHJeac" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop"><img src="https://i.ytimg.com/vi/tJ0u4dHJeac/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLB7dj_PMvp8q7DZvjMLVGKmFcHj1w"></a></div></div></div>`;
+// const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/emporium-members.json';
 
 (async function() {
     'use strict';
@@ -131,6 +132,8 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
 
         if (workshop_item_regex.test(current_url)) {
             window.is_page_flagged = true
+
+            $J('.detailBox.plain').prepend($J(workshop_item_notification_html))
 
             $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span>This Workshop Item includes a criminal from the Emporium group.</span><a href="https://www.youtube.com/watch?v=tJ0u4dHJeac&amp;t" style="color: rgba(255, 0, 0, 1);text-decoration: underline;">Please, do not vote for this submission.</a></div>`);
             $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.2)');
@@ -363,14 +366,3 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         document.title = original_title
     })()
 })();
-
-/*
-<div class="detailBox altFooter">
-				<div class="workshopItemDescriptionTitle" style="font-family: Consolas;color: white;font-size: 20px;display: flex;"><span style="text-align: center;">This workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.</span></div>
-								<div class="workshopItemDescription" id="highlightContent">
-<div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop" href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885"><img src="https://media.discordapp.net/attachments/1336010797603618850/1336658391120085002/drew_and_meta_ban_announcement.png?ex=67a49ba2&amp;is=67a34a22&amp;hm=dd5a9648c64d25c50ca5bf8d5ba77e4eeeeadacb55dfd8259413100d538579cc&amp;=&amp;format=webp&amp;quality=lossless"></a></div><br><a href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885" style=" display: flex;justify-content: space-around;font-size: 20px; color: skyblue; text-decoration: underline;font-family: Consolas;">Discord Hyperlink to channel.</a>
-<br><a href="https://www.youtube.com/@BigBoiGames" style="display: flex;justify-content: space-around;font-size: 20px; color: white;text-decoration: underline;font-family: Consolas;">Videos by BigBoiGames.</a>
-<br>
-<div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=nHGXvEFaA2o&amp;t" rel="" title="I made a video exposing the TF2 Workshop Monopoly. They responded."><img src="https://i.ytimg.com/vi/nHGXvEFaA2o/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLD_cpuyiuVcVMnYciWcEfh2Yxrd3w"></a><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=tJ0u4dHJeac" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop"><img src="https://i.ytimg.com/vi/tJ0u4dHJeac/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLB7dj_PMvp8q7DZvjMLVGKmFcHj1w"></a></div></div>
-			</div>
- */
