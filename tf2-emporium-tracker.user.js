@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      05.02.2025 16:26
+// @version      05.02.2025 18:02
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/sharedfiles/filedetails/*
@@ -17,7 +17,10 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
 
     // FIXME: Content Security Policy.
     // window.emporium_members = await fetch(emporium_source).then(async (response) => await response.json())
-    window.emporium_members = ["76561198043855981", "76561198011507712"]
+    window.emporium_members = {
+        '76561198043855981': 'Metabolic',
+        '76561198011507712': 'Drew'
+    }
     window.is_page_flagged = false
 
     const workshop_item_regex = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/.*$/
@@ -27,7 +30,7 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
     const current_url = document.location.href
 
     window.isEmporiumMember = function (steam_id) {
-        return window.emporium_members.includes(steam_id)
+        return (steam_id in window.emporium_members)
     }
 
     window.getProfileObject = function (html) {
@@ -84,20 +87,23 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
 
         return cache[url]
     }
-    window.cache = async function (url, flagged) {
+    window.cache = async function (url, steamid, flagged) {
         return new Promise((resolve) => {
             const cache = window.getCache()
             const cached = (url in cache)
 
             if (cached) {
                 // Prioritizing 'flagged === true' over 'flagged === false'.
-                if (cache[url] === false && flagged) {
-                    cache[url] = flagged
+                if (cache[url]['flagged'] === false && flagged) {
+                    cache[url]['flagged'] = flagged
                 } else {
                     resolve()
                 }
             } else {
-                cache[url] = flagged
+                cache[url] = {
+                    steam_id: steamid,
+                    flagged: flagged
+                }
             }
 
             localStorage.setItem('tf2-emporium-tracker', JSON.stringify(cache))
@@ -115,7 +121,9 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         $profile.css('opacity', '0.4')
         $profile.css('border', 'solid 1px red')
     }
-    window.flagCreator = function ($profile) {
+    window.flagCreator = function ($profile, steamid) {
+        $J(`<span style="color: red"> (${window.emporium_members[steamid]})</span>`).insertBefore($profile.find('br'))
+
         $profile.css('background', 'rgba(255, 0, 0, 0.2)')
     }
     window.flagPage = function () {
@@ -124,14 +132,14 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         if (workshop_item_regex.test(current_url)) {
             window.is_page_flagged = true
 
-            $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span>This Workshop Item includes a member of Emporium group.</span><a href="https://www.youtube.com/watch?v=tJ0u4dHJeac&amp;t" style="color: rgba(255, 0, 0, 1);text-decoration: underline;">Please, do not support this group and their items.</a></div>`);
+            $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span>This Workshop Item includes a criminal from the Emporium group.</span><a href="https://www.youtube.com/watch?v=tJ0u4dHJeac&amp;t" style="color: rgba(255, 0, 0, 1);text-decoration: underline;">Please, do not vote for this submission.</a></div>`);
             $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.2)');
         }
 
         if (workshop_profile_regex.test(current_url)) {
             window.is_page_flagged = true
 
-            $J('.sharedfiles_header_ctn').append(`<div id="HeaderUserBreadcrumbs" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span>This Workshop profile belongs to a member of the Emporium group.</span><a href="https://www.youtube.com/watch?v=tJ0u4dHJeac&amp;t" style="color: rgba(255, 0, 0, 1);text-decoration: underline;">Please, do not support this group and their items.</a></div>`);
+            $J('.sharedfiles_header_ctn').append(`<div id="HeaderUserBreadcrumbs" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span>This Workshop Item includes a criminal from the Emporium group.</span><a href="https://www.youtube.com/watch?v=tJ0u4dHJeac&amp;t" style="color: rgba(255, 0, 0, 1);text-decoration: underline;">Please, do not vote for this submission.</a></div>`);
             $J('#leftContents').css('background', 'rgba(255, 0, 0, 0.2)');
         }
     }
@@ -145,15 +153,15 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
     // https://steamcommunity.com/sharedfiles/filedetails/*
     // https://steamcommunity.com/id/*/myworkshopfiles/?appid=440*
     // https://steamcommunity.com/profiles/*/myworkshopfiles/?appid=440*
-    window.flagIfEmporiumMember = async function () {
+    window.checkWorkshopItem = async function () {
         const is_workshop_item = workshop_item_regex.test(current_url)
         const is_workshop_profile = workshop_profile_regex.test(current_url)
         if (!is_workshop_item && !is_workshop_profile) return
 
         if (window.isCached(current_url)) {
-            const object = window.getFromCache(current_url)
+            const { flagged } = window.getFromCache(current_url)
 
-            if (object['flagged']) {
+            if (flagged) {
                 console.log('(cached page) This is an Emporium item, flagging the page.')
                 window.flagPage()
             } else {
@@ -168,18 +176,20 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
                 const user_url = $J(profile).find('.friendBlockLinkOverlay').attr('href')
 
                 if (window.isCached(user_url)) {
-                    const object = window.getFromCache(user_url)
+                    const { steam_id, flagged } = window.getFromCache(user_url)
 
-                    if (object['flagged']) {
+                    if (flagged) {
                         console.log('(cached user) Found an Emporium member, flagging him and the page.')
 
-                        window.flagCreator($J(profile))
+                        window.flagCreator($J(profile), steam_id)
                         window.flagPage()
 
-                        window.cache(user_url, true)
-                        window.cache(current_url, true)
+                        await window.cache(user_url, undefined, true)
+                        await window.cache(current_url, undefined, true)
                     } else {
                         console.log('(cached user) Found a legit creator, skipping him.')
+                        await window.cache(user_url, undefined, false)
+                        await window.cache(current_url, undefined, false)
                     }
 
                     continue
@@ -195,15 +205,16 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
                     if (window.isEmporiumMember(steam_id)) {
                         console.log('Found a non-cached Emporium member, flagging him and the page.')
 
-                        window.flagCreator($J(profile))
+                        window.flagCreator($J(profile), steam_id)
                         window.flagPage()
 
-                        window.cache(user_url, true)
-                        window.cache(current_url, true)
+                        await window.cache(user_url, steam_id, true)
+                        await window.cache(current_url, undefined, true)
                     } else {
                         console.log('Found a legit creator, skipping him.')
 
-                        window.cache(user_url, false)
+                        await window.cache(user_url, steam_id, false)
+                        await window.cache(current_url, undefined, false)
                     }
                 } catch (error) {
                     console.error('Error fetching profile:', error);
@@ -226,7 +237,8 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
 
                 const steam_id = object['steamid']
                 if (window.isEmporiumMember(steam_id)) {
-                    window.cache(user_workshop_url)
+                    await window.cache(user_workshop_url, undefined, true)
+                    await window.cache(current_url, undefined, true)
                     window.flagPage()
                 }
             } catch (error) {
@@ -235,7 +247,7 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         }
     };
 
-    window.checkWorkshop = async function () {
+    window.checkWorkshopItems = async function () {
         const items = $J('.workshopItem')
 
         for (let i = 0; i < items.length; i++) {
@@ -256,7 +268,7 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         const workshop_item_name = $workshop_item_name.text()
 
         if (window.isCached(workshop_item_url)) {
-            const flagged = window.getFromCache(workshop_item_url)
+            const { flagged } = window.getFromCache(workshop_item_url)
 
             if (flagged) {
                 console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
@@ -279,19 +291,19 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
                 const user_profile_url = $profile.find('.friendBlockLinkOverlay').attr('href')
 
                 if (window.isCached(user_profile_url)) {
-                    const flagged = window.getFromCache(user_profile_url)
+                    const { flagged } = window.getFromCache(user_profile_url)
 
                     if (flagged) {
                         console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
                         window.flagItem($workshop_item)
 
-                        await window.cache(workshop_item_url, true)
-                        await window.cache(user_profile_url, true)
+                        await window.cache(workshop_item_url, undefined, true)
+                        await window.cache(user_profile_url, undefined, true)
                     } else {
                         console.log(`(cached item) '${workshop_item_name}' is legit, skipping the item.`)
 
-                        await window.cache(workshop_item_url, false)
-                        await window.cache(user_profile_url, false)
+                        await window.cache(workshop_item_url, undefined, false)
+                        await window.cache(user_profile_url, undefined, false)
                     }
 
                     window.markItemAsCached($workshop_item)
@@ -306,13 +318,13 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
                         console.warn(`'${workshop_item_name}' includes '${personaname}' which is an Emporium member, flagging the item.`)
                         window.flagItem($workshop_item)
 
-                        await window.cache(workshop_item_url, true)
-                        await window.cache(user_profile_url, true)
+                        await window.cache(workshop_item_url, undefined, true)
+                        await window.cache(user_profile_url, steamid, true)
                     } else {
                         console.log(`'${workshop_item_name}' includes '${personaname}' which is a legit creator, searching for the next creator.`)
 
-                        await window.cache(workshop_item_url, false)
-                        await window.cache(user_profile_url, false)
+                        await window.cache(workshop_item_url, undefined, false)
+                        await window.cache(user_profile_url, steamid, false)
                     }
 
                     window.markItemAsCached($workshop_item)
@@ -325,14 +337,40 @@ const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Empo
         const is_workshop = workshop_regex.test(current_url)
         const original_title = document.title
 
-        document.title = `${original_title} | Checking On Emporium Members...`
+        let counter = 0
+        const title_interval = setInterval(() => {
+            document.title = 'Checking On Bad Actors' + '.'.repeat(counter)
+            counter++
+
+            if (counter > 3) counter = 0
+        }, 500)
 
         if (is_workshop) {
-            await checkWorkshop()
+            // Method works only for
+            //
+            // https://steamcommunity.com/workshop/browse/?appid=440&browsesort=trend&section=mtxitems
+            await checkWorkshopItems()
         } else {
-            await flagIfEmporiumMember()
+            // Method works only for
+            //
+            // https://steamcommunity.com/sharedfiles/filedetails/*
+            // https://steamcommunity.com/id/*/myworkshopfiles/?appid=440*
+            // https://steamcommunity.com/profiles/*/myworkshopfiles/?appid=440*
+            await checkWorkshopItem()
         }
 
-        document.title = `${original_title} | Done.`
+        clearInterval(title_interval)
+        document.title = original_title
     })()
 })();
+
+/*
+<div class="detailBox altFooter">
+				<div class="workshopItemDescriptionTitle" style="font-family: Consolas;color: white;font-size: 20px;display: flex;"><span style="text-align: center;">This workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.</span></div>
+								<div class="workshopItemDescription" id="highlightContent">
+<div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop" href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885"><img src="https://media.discordapp.net/attachments/1336010797603618850/1336658391120085002/drew_and_meta_ban_announcement.png?ex=67a49ba2&amp;is=67a34a22&amp;hm=dd5a9648c64d25c50ca5bf8d5ba77e4eeeeadacb55dfd8259413100d538579cc&amp;=&amp;format=webp&amp;quality=lossless"></a></div><br><a href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885" style=" display: flex;justify-content: space-around;font-size: 20px; color: skyblue; text-decoration: underline;font-family: Consolas;">Discord Hyperlink to channel.</a>
+<br><a href="https://www.youtube.com/@BigBoiGames" style="display: flex;justify-content: space-around;font-size: 20px; color: white;text-decoration: underline;font-family: Consolas;">Videos by BigBoiGames.</a>
+<br>
+<div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=nHGXvEFaA2o&amp;t" rel="" title="I made a video exposing the TF2 Workshop Monopoly. They responded."><img src="https://i.ytimg.com/vi/nHGXvEFaA2o/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLD_cpuyiuVcVMnYciWcEfh2Yxrd3w"></a><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=tJ0u4dHJeac" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop"><img src="https://i.ytimg.com/vi/tJ0u4dHJeac/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&amp;rs=AOn4CLB7dj_PMvp8q7DZvjMLVGKmFcHj1w"></a></div></div>
+			</div>
+ */
