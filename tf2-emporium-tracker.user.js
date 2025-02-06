@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      06.02.2025 2:14
+// @version      05.02.2025
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/sharedfiles/filedetails/*
@@ -24,9 +24,9 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
     }
     window.is_page_flagged = false
 
-    const workshop_item_regex = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/.*$/
-    const workshop_profile_regex = /^https:\/\/steamcommunity\.com\/(id|profiles)\/[^\/]+\/myworkshopfiles\/\?appid=440\d*$/
-    const workshop_regex = /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?appid=440.*$/
+    const workshop_item_regex = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/.*$/;
+    const workshop_profile_regex = /^https:\/\/steamcommunity\.com\/(id|profiles)\/[^\/]+\/myworkshopfiles\/\?appid=440\d*.*$/;
+    const workshop_regex = /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?appid=440.*$/;
 
     const current_url = document.location.href
 
@@ -137,13 +137,6 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
 
             $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal from the Emporium group. Please, do not vote for this submission.</span></div>`);
             $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.3)');
-        }
-
-        if (workshop_profile_regex.test(current_url)) {
-            window.is_page_flagged = true
-
-            $J('.sharedfiles_header_ctn').append(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal from the Emporium group. Please, do not vote for this submission.</span></div>`);
-            $J('#leftContents').css('background', 'rgba(255, 0, 0, 0.3)');
         }
     }
 
@@ -337,7 +330,7 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
     }
 
     await (async () => {
-        const is_workshop = workshop_regex.test(current_url)
+        const is_workshop = workshop_regex.test(current_url) || workshop_profile_regex.test(current_url)
         const original_title = document.title
 
         let counter = 0
