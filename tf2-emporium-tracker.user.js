@@ -3,10 +3,10 @@
 // @version      06.02.2025 2:28
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
-// @match        https://steamcommunity.com/sharedfiles/filedetails/*
-// @match        https://steamcommunity.com/id/*/myworkshopfiles/?appid=440*
-// @match        https://steamcommunity.com/profiles/*/myworkshopfiles/?appid=440*
-// @match        https://steamcommunity.com/workshop/browse/?appid=440*
+// @match        https://steamcommunity.com/sharedfiles/filedetails*
+// @match        https://steamcommunity.com/id/*/myworkshopfiles*
+// @match        https://steamcommunity.com/profiles/*/myworkshopfiles*
+// @match        https://steamcommunity.com/workshop/browse*
 // @grant        none
 // ==/UserScript==
 
