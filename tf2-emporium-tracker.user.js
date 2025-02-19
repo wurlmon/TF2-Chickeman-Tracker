@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      19.02.2025 17:15
+// @version      19.02.2025 18:54
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/*
@@ -12,7 +12,6 @@ const thumbnail_1_image = 'https://github.com/EurekaEffect/TF2-Emporium-Tracker/
 const thumbnail_2_image = 'https://github.com/EurekaEffect/TF2-Emporium-Tracker/blob/main/assets/thumbnail_2.png?raw=true';
 
 const workshop_item_notification_html = `<div class="detailBox altFooter"><div class="workshopItemDescriptionTitle" style="font-family: &quot;Motiva Sans&quot;,Arial,Helvetica,sans-serif;color: white;font-size: 18px;display: flex;"><span style="text-align: center;text-transform: none;">This Workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.</span></div><div class="workshopItemDescription" id="highlightContent"><div style="display: flex;justify-content: space-around;"><a class="bb_link" target="_blank" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop" href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885"><img src="${void_image}"></a></div><br><a href="https://discord.com/channels/217585440457228290/292291925640216577/476822103706959885" style=" display: flex;justify-content: space-around;font-size: 16px; color: skyblue; font-family: &quot;Motiva Sans&quot;,Arial,Helvetica,sans-serif;">Discord Hyperlink to channel.</a><br><span style="font-size: 16px; color: white;font-family: &quot;Motiva Sans&quot;,Arial,Helvetica,sans-serif;display: flex;justify-content: space-around;"><div>Videos by <a href="https://www.youtube.com/@BigBoiGames" style="text-decoration: underline;">BigBoiGames</a>.</div></span><br><div style="display: flex;justify-content: space-evenly;gap: 1px;"><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=nHGXvEFaA2o&amp;t" rel="" title="I made a video exposing the TF2 Workshop Monopoly. They responded."><img src="${thumbnail_2_image}" style="width: 110%;"></a><a class="bb_link" target="_blank" href="https://www.youtube.com/watch?v=tJ0u4dHJeac" rel="" title="EXPOSING The Group That Ruined The TF2 Workshop"><img src="${thumbnail_1_image}" style="width: 110%;"></a></div></div></div>`;
-// const emporium_source = 'https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/emporium-members.json';
 
 (async function () {
     'use strict'
@@ -69,9 +68,9 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
             return resolve()
         })
     }
-
-    const workshop_item_regex = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/.*$/;
-    const workshop_profile_regex = /^https:\/\/steamcommunity\.com\/(id|profiles)\/[^\/]+\/myworkshopfiles\/\?appid=440\d*.*$/;
+    window.markItemAsCached = function ($workshop_item) {
+        $workshop_item.attr('cached', true)
+    }
 
     window.isEmporiumMember = function (steam_id) {
         return (steam_id in window.emporium_members)
@@ -138,251 +137,120 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
     window.flagPage = function () {
         if (window.is_page_flagged) return
 
-        if (workshop_item_regex.test(window.url)) {
-            window.is_page_flagged = true
+        window.is_page_flagged = true
 
-            $J('.detailBox.plain').prepend($J(workshop_item_notification_html))
+        $J('.detailBox.plain').prepend($J(workshop_item_notification_html))
 
-            $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal from the Emporium group. Please, do not vote for this submission.</span></div>`);
-            $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.3)');
-        }
+        $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal from the Emporium group. Please, do not vote for this submission.</span></div>`);
+        $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.3)');
     }
 
-    window.markItemAsCached = function ($workshop_item) {
-        $workshop_item.attr('cached', true)
+    window.getWorkshopItems = function () {
+        const $workshop_items = {
+            'div.workshop_item': [],
+            'a.workshop_item_link': [],
+            'div.workshopItem': [],
+            'div.collectionItem': [],
+            'a.workshopItemCollection': []
+        }
+
+        // Handling 'a.workshop_item_link'.
+        const $div_workshop_items = $J('.workshop_item')
+        $div_workshop_items.each((i, $workshop_item) => {
+            const $workshop_item_link = $J($workshop_item).find('a.workshop_item_link')
+
+            if ($workshop_item_link.length > 0) {
+                $workshop_items['div.workshop_item'].push($workshop_item)
+            }
+        })
+
+        // Handling 'div.workshop_item'.
+        const $a_workshop_item_link  = $J('a.workshop_item_link')
+        $a_workshop_item_link.each((i, $workshop_item) => {
+            const $workshop_item_row = $J($workshop_item).find('div.workshop_item_row')
+
+            if ($workshop_item_row.length > 0) {
+                $workshop_items['a.workshop_item_link'].push($workshop_item)
+            }
+        })
+
+        // Handling 'div.workshopItem'.
+        const $div_workshopItem  = $J('div.workshopItem')
+        $div_workshopItem.each((i, $workshop_item) => {
+            const $a_ugc = $J($workshop_item).find('a.ugc')
+            const $a_item_link = $J($workshop_item).find('a.item_link')
+            const $div_workshopItemAuthorName = $J($workshop_item).find('div.workshopItemAuthorName ')
+
+            if (($a_ugc.length > 0) && ($a_item_link.length > 0) && ($div_workshopItemAuthorName.length > 0)) {
+                $workshop_items['div.workshopItem'].push($workshop_item)
+            }
+        })
+
+        // Handling 'div.collectionItem'.
+        const $div_collectionItem  = $J('div.collectionItem')
+        $div_collectionItem.each((i, $workshop_item) => {
+            const $div_workshopItem = $J($workshop_item).find('div.workshopItem')
+            const $div_collectionItemDetails = $J($workshop_item).find('div.collectionItemDetails')
+
+            if (($div_workshopItem.length > 0) && ($div_collectionItemDetails.length > 0)) {
+                $workshop_items['div.collectionItem'].push($workshop_item)
+            }
+        })
+
+        // Handling 'div.workshopItemCollection'.
+        const $div_workshopItemCollection = $J('a.workshopItemCollection')
+        $div_workshopItemCollection.each((i, $workshop_item) => {
+            const $div_workshopItem = $J($workshop_item).find('div.workshopItem')
+            const $div_workshopItemDetails = $J($workshop_item).find('div.workshopItemDetails')
+
+            if (($div_workshopItem.length > 0) && ($div_workshopItemDetails.length > 0)) {
+                $workshop_items['a.workshopItemCollection'].push($workshop_item)
+            }
+        })
+
+        return $workshop_items
     }
 
-    // Method works only for
-    //
-    // https://steamcommunity.com/sharedfiles/filedetails/*
-    // https://steamcommunity.com/id/*/myworkshopfiles/?appid=440*
-    // https://steamcommunity.com/profiles/*/myworkshopfiles/?appid=440*
-    window.checkWorkshopItem = async function () {
-        const is_workshop_item = workshop_item_regex.test(window.url)
-        const is_workshop_profile = workshop_profile_regex.test(window.url)
-        if (!is_workshop_item && !is_workshop_profile) return
-
-        if (window.isCached(window.url)) {
-            const {flagged} = window.getFromCache(window.url)
-
-            if (flagged) {
-                console.log('(cached page) This is an Emporium item, flagging the page.')
-                window.flagPage()
-            } else {
-                console.log('(cached page) This is not an Emporium item, skipping the page.')
-                return // Skipping the creators since it's not an Emporium item.
-            }
-        }
-
-        if (is_workshop_item) {
-            for (let i = 0; i < $J('.friendBlock').length; i++) {
-                const profile = $J('.friendBlock').get(i)
-                const user_url = $J(profile).find('.friendBlockLinkOverlay').attr('href')
-
-                if (window.isCached(user_url)) {
-                    const {steam_id, flagged} = window.getFromCache(user_url)
-
-                    if (flagged) {
-                        console.log('(cached user) Found an Emporium member, flagging him and the page.')
-
-                        window.flagCreator($J(profile), steam_id)
-                        window.flagPage()
-
-                        await window.cache(user_url, undefined, true)
-                        await window.cache(window.url, undefined, true)
-                    } else {
-                        console.log('(cached user) Found a legit creator, skipping him.')
-                        await window.cache(user_url, undefined, false)
-                        await window.cache(window.url, undefined, false)
-                    }
-
-                    continue
-                }
-
-                // Getting the steam_id.
-                try {
-                    const response = await fetch(user_url);
-                    const html = await response.text();
-                    const object = getProfileObject(html);
-
-                    const steam_id = object['steamid']
-                    if (window.isEmporiumMember(steam_id)) {
-                        console.log('Found a non-cached Emporium member, flagging him and the page.')
-
-                        window.flagCreator($J(profile), steam_id)
-                        window.flagPage()
-
-                        await window.cache(user_url, steam_id, true)
-                        await window.cache(window.url, undefined, true)
-                    } else {
-                        console.log('Found a legit creator, skipping him.')
-
-                        await window.cache(user_url, steam_id, false)
-                        await window.cache(window.url, undefined, false)
-                    }
-                } catch (error) {
-                    console.error('Error fetching profile:', error);
-                }
-            }
-        }
-
-        if (workshop_profile_regex.test(window.url)) {
-            let user_workshop_url = $J('#HeaderUserInfoName > a').attr('href');
-
-            // Flagging cached user workshop url.
-            if (getFromCache(user_workshop_url)) {
-                return window.flagPage()
-            }
-
-            try {
-                const response = await fetch(user_workshop_url);
-                const html = await response.text();
-                const object = getProfileObject(html);
-
-                const steam_id = object['steamid']
-                if (window.isEmporiumMember(steam_id)) {
-                    await window.cache(user_workshop_url, undefined, true)
-                    await window.cache(window.url, undefined, true)
-                    window.flagPage()
-                }
-            } catch (error) {
-                console.error('Error fetching profile:', error);
-            }
-        }
-    };
-
-    window.checkWorkshopPage = async function () {
-        const items = $J('.workshopItem')
-
-        for (let i = 0; i < items.length; i++) {
-            const $workshop_item = $J(items[i])
-
-            await window.flagWorkshopItemIfIncludesEmporiumMember($workshop_item)
-            const is_cached = $workshop_item.attr('cached')
-
-            if (!is_cached) await new Promise((res) => setTimeout(res, 100))
-        }
-    };
-
-    window.flagWorkshopItemIfIncludesEmporiumMember = async function ($workshop_item) {
-        const $ugc = $workshop_item.find('.ugc')
-        const workshop_item_url = $ugc.attr('href')
-
-        const $workshop_item_name = $workshop_item.find('.item_link').find('.workshopItemTitle')
-        const workshop_item_name = $workshop_item_name.text()
-
-        if (window.isCached(workshop_item_url)) {
-            const {flagged} = window.getFromCache(workshop_item_url)
-
-            if (flagged) {
-                console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
-                window.flagItem($workshop_item)
-            } else {
-                console.log(`(cached item) '${workshop_item_name}' is legit, skipping the item.`)
-            }
-
-            window.markItemAsCached($workshop_item)
-        } else {
-            // Making a request to the page to get the creators list.
-            const workshop_item_page_html = await fetch(workshop_item_url).then((res) => res.text())
-            const $workshop_item_page_html = $J(workshop_item_page_html)
-
-            const $creators_block = $workshop_item_page_html.find('.creatorsBlock')
-            const $creators = $creators_block.find('.friendBlock') // I wonder why did they call creators as 'friends'.
-
-            for (let i = 0; i < $creators.length; i++) {
-                const $profile = $J($creators.get(i))
-                const user_profile_url = $profile.find('.friendBlockLinkOverlay').attr('href')
-
-                if (window.isCached(user_profile_url)) {
-                    const {flagged} = window.getFromCache(user_profile_url)
-
-                    if (flagged) {
-                        console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
-                        window.flagItem($workshop_item)
-
-                        await window.cache(workshop_item_url, undefined, true)
-                        await window.cache(user_profile_url, undefined, true)
-                    } else {
-                        console.log(`(cached item) '${workshop_item_name}' is legit, skipping the item.`)
-
-                        await window.cache(workshop_item_url, undefined, false)
-                        await window.cache(user_profile_url, undefined, false)
-                    }
-
-                    window.markItemAsCached($workshop_item)
-                } else {
-                    // Making a request to the user page to get the steamid64.
-                    const user_profile_page_html = await fetch(user_profile_url).then((res) => res.text())
-                    const g_rgProfileData = window.getProfileObject(user_profile_page_html)
-
-                    const {personaname, steamid} = g_rgProfileData
-
-                    if (window.isEmporiumMember(steamid)) {
-                        console.warn(`'${workshop_item_name}' includes '${personaname}' which is an Emporium member, flagging the item.`)
-                        window.flagItem($workshop_item)
-
-                        await window.cache(workshop_item_url, undefined, true)
-                        await window.cache(user_profile_url, steamid, true)
-                    } else {
-                        console.log(`'${workshop_item_name}' includes '${personaname}' which is a legit creator, searching for the next creator.`)
-
-                        await window.cache(workshop_item_url, undefined, false)
-                        await window.cache(user_profile_url, steamid, false)
-                    }
-
-                    window.markItemAsCached($workshop_item)
-                }
-            }
-        }
-    }
-
-
-    window.verifyItem = async function ($workshop_item) {
+    window.verifyItem = async function (class_name, $workshop_item) {
         $workshop_item = $J($workshop_item) // Just to be sure.
-
-        // Getting the first class name.
-        const item_class = $workshop_item.attr('class').split(' ')[0]
 
         let item_url;
         let item_name;
 
-        switch (item_class) {
-            case 'workshopItem': {
-                const $ugc = $workshop_item.find('.ugc') // What does this name mean bru.
-                item_url = $ugc.attr('href')
+        // It works as intended, but God I hate it.
+        switch (class_name) {
+            case 'div.workshop_item': {
+                item_url = $workshop_item.find('a.workshop_item_link.ugc').attr('href')
+                if (!item_url) item_url = $workshop_item.find('a.workshop_item_link').attr('href')
 
-                const $workshop_item_name = $workshop_item.find('.item_link').find('.workshopItemTitle')
-                item_name = $workshop_item_name.text()
+                item_name = 'unknown' // There's no item name in that element.
                 break
             }
 
-            case 'workshop_item_link': {
+            case 'a.workshop_item_link': {
                 item_url = $workshop_item.attr('href')
-
-                const $workshop_item_name = $workshop_item.find('.workshop_item_title')
-                item_name = $workshop_item_name.text()
+                item_name = $workshop_item.find('div.workshop_item_row div.workshop_item_title.ellipsis').text()
                 break
             }
 
-            case 'collectionItem': {
-                const $a = $workshop_item.find('div.workshopItem a')
-                item_url = $a.attr('href')
-
-                const $workshop_item_name = $workshop_item.find('div.collectionItemDetails a div.workshopItemTitle')
-                item_name = $workshop_item_name.text()
+            case 'div.workshopItem': {
+                item_url = $workshop_item.find('a.ugc').attr('href')
+                item_name = $workshop_item.find('a.item_link div.workshopItemTitle.ellipsis').text()
                 break
             }
 
-            case 'workshopItemCollection': {
+            case 'div.collectionItem': {
+                item_url = $workshop_item.find('div.workshopItem a').attr('href')
+                item_name = $workshop_item.find('div.collectionItemDetails a div.workshopItemTitle').text()
+                break
+            }
+
+            case 'a.workshopItemCollection': {
                 item_url = $workshop_item.attr('href')
-
-                const $workshop_item_name = $workshop_item.find('div.workshopItemDetails div.workshopItemTitle')
-                item_name = $workshop_item_name.text()
-                break
+                item_name = $workshop_item.find('div.workshopItemDetails div.workshopItemTitle').text()
             }
         }
-
+        
         await openItemPageAndVerifyCreators($workshop_item, item_url, item_name)
     }
     window.openItemPageAndVerifyCreators = async function ($workshop_item, workshop_item_url, workshop_item_name) {
@@ -465,12 +333,11 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
             return new Promise(async (resolve) => {
                 // Covering all possible workshop item class names.
                 // We are also skipping '.voting_queue_border div.workshop_item' because it has no url.
-                const $workshop_items = $J('.workshopItemCollection, .collectionItem, .workshopItem, .workshop_item_link')
+                const workshop_items = window.getWorkshopItems()
 
-                console.log('workshop items: ' + $workshop_items.length)
-
-                if ($workshop_items.length > 0) {
+                for (let [class_name, $workshop_items] of Object.entries(workshop_items)) {
                     for (let i = 0; i < $workshop_items.length; i++) {
+                        // Updating the title.
                         document.title = `[${i + 1}/${$workshop_items.length}] ${original_title}`
 
                         const $workshop_item = $J($workshop_items[i])
@@ -478,16 +345,13 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
                         // Verifying the item, yeah.
                         // as the result the item will be marked as 'cached'.
                         // If it is, then we can skip unnecessary 100ms delay.
-                        await window.verifyItem($workshop_item)
+                        await window.verifyItem(class_name, $workshop_item)
                         const is_cached = $workshop_item.attr('cached')
 
                         if (!is_cached) {
                             await new Promise((resolve) => setTimeout(resolve, 100))
                         }
                     }
-                } else {
-                    // Checking if the page is item workshop page.
-                    await window.checkWorkshopItem()
                 }
 
                 return resolve()
@@ -495,6 +359,8 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
         }
 
         // Starting the validator.
-        await workshop_validator().then(() => document.title = original_title)
+        await workshop_validator().then(() => {
+            document.title = original_title
+        })
     })()
 })()
