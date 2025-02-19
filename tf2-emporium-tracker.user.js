@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      19.02.2025 17:05
+// @version      19.02.2025 17:15
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/*
@@ -366,10 +366,18 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
             }
 
             case 'collectionItem': {
-                const $a = $J('div.workshopItem a')
+                const $a = $workshop_item.find('div.workshopItem a')
                 item_url = $a.attr('href')
 
                 const $workshop_item_name = $workshop_item.find('div.collectionItemDetails a div.workshopItemTitle')
+                item_name = $workshop_item_name.text()
+                break
+            }
+
+            case 'workshopItemCollection': {
+                item_url = $workshop_item.attr('href')
+
+                const $workshop_item_name = $workshop_item.find('div.workshopItemDetails div.workshopItemTitle')
                 item_name = $workshop_item_name.text()
                 break
             }
@@ -378,7 +386,9 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
         await openItemPageAndVerifyCreators($workshop_item, item_url, item_name)
     }
     window.openItemPageAndVerifyCreators = async function ($workshop_item, workshop_item_url, workshop_item_name) {
-        if (!workshop_item_url && !workshop_item_name) return
+        if (!workshop_item_url && !workshop_item_name) {
+            return window.markItemAsCached($workshop_item)
+        }
 
         if (window.isCached(workshop_item_url)) {
             const {flagged} = window.getFromCache(workshop_item_url)
@@ -455,7 +465,7 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
             return new Promise(async (resolve) => {
                 // Covering all possible workshop item class names.
                 // We are also skipping '.voting_queue_border div.workshop_item' because it has no url.
-                const $workshop_items = $J('.collectionItem, .workshopItem, .workshop_item_link')
+                const $workshop_items = $J('.workshopItemCollection, .collectionItem, .workshopItem, .workshop_item_link')
 
                 console.log('workshop items: ' + $workshop_items.length)
 
