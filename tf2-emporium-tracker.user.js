@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      19.02.2025 19:18
+// @version      19.02.2025 19:29
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/*
@@ -281,55 +281,115 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
             const workshop_item_page_html = await fetch(workshop_item_url).then((res) => res.text())
             const $workshop_item_page_html = $J(workshop_item_page_html)
 
-            await window.verifyCreators($workshop_item_page_html, $workshop_item, workshop_item_url, workshop_item_name)
+            const $creators_block = $workshop_item_page_html.find('.creatorsBlock')
+            const $creators = $creators_block.find('.friendBlock') // I wonder why did they call creators as 'friends'.
+
+            for (let i = 0; i < $creators.length; i++) {
+                const $profile = $J($creators.get(i))
+                const user_profile_url = $profile.find('.friendBlockLinkOverlay').attr('href')
+
+                if (window.isCached(user_profile_url)) {
+                    const {flagged} = window.getFromCache(user_profile_url)
+
+                    if (flagged) {
+                        console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
+                        window.flagItem($workshop_item)
+
+                        await window.cache(workshop_item_url, undefined, true)
+                        await window.cache(user_profile_url, undefined, true)
+                    } else {
+                        console.log(`(cached item) '${workshop_item_name}' is legit, skipping the item.`)
+
+                        await window.cache(workshop_item_url, undefined, false)
+                        await window.cache(user_profile_url, undefined, false)
+                    }
+
+                    window.markItemAsCached($workshop_item)
+                } else {
+                    // Making a request to the user page to get the steamid64.
+                    const user_profile_page_html = await fetch(user_profile_url).then((res) => res.text())
+                    const g_rgProfileData = window.getProfileObject(user_profile_page_html)
+
+                    const {personaname, steamid} = g_rgProfileData
+
+                    if (window.isEmporiumMember(steamid)) {
+                        console.warn(`'${workshop_item_name}' includes '${personaname}' which is an Emporium member, flagging the item.`)
+                        window.flagItem($workshop_item)
+
+                        await window.cache(workshop_item_url, undefined, true)
+                        await window.cache(user_profile_url, steamid, true)
+                    } else {
+                        console.log(`'${workshop_item_name}' includes '${personaname}' which is a legit creator, searching for the next creator.`)
+
+                        await window.cache(workshop_item_url, undefined, false)
+                        await window.cache(user_profile_url, steamid, false)
+                    }
+
+                    window.markItemAsCached($workshop_item)
+                }
+            }
         }
     }
-    window.verifyCreators = async function ($html, $workshop_item, workshop_item_url, workshop_item_name) {
-        const $creators_block = $html.find('.creatorsBlock')
-        const $creators = $creators_block.find('.friendBlock') // I wonder why did they call creators as 'friends'.
+    window.verifyCreatorsOnThisPage = async function () {
+        if (window.isCached(window.url)) {
+            const {flagged} = window.getFromCache(window.url)
 
-        for (let i = 0; i < $creators.length; i++) {
-            const $profile = $J($creators.get(i))
-            const user_profile_url = $profile.find('.friendBlockLinkOverlay').attr('href')
+            if (flagged) {
+                console.log('(cached page) This is an Emporium item, flagging the page.')
+                window.flagPage()
+            } else {
+                console.log('(cached page) This is not an Emporium item, skipping the page.')
+                return // Skipping the creators since it's not an Emporium item.
+            }
+        }
 
-            if (window.isCached(user_profile_url)) {
-                const {flagged} = window.getFromCache(user_profile_url)
+        for (let i = 0; i < $J('.friendBlock').length; i++) {
+            const profile = $J('.friendBlock').get(i)
+            const user_url = $J(profile).find('.friendBlockLinkOverlay').attr('href')
+
+            if (window.isCached(user_url)) {
+                const {steam_id, flagged} = window.getFromCache(user_url)
 
                 if (flagged) {
-                    console.warn(`(cached item) '${workshop_item_name}' includes an Emporium member, flagging the item.`)
-                    window.flagItem($workshop_item)
+                    console.log('(cached user) Found an Emporium member, flagging him and the page.')
 
-                    await window.cache(workshop_item_url, undefined, true)
-                    await window.cache(user_profile_url, undefined, true)
+                    window.flagCreator($J(profile), steam_id)
+                    window.flagPage()
+
+                    await window.cache(user_url, undefined, true)
+                    await window.cache(window.url, undefined, true)
                 } else {
-                    console.log(`(cached item) '${workshop_item_name}' is legit, skipping the item.`)
-
-                    await window.cache(workshop_item_url, undefined, false)
-                    await window.cache(user_profile_url, undefined, false)
+                    console.log('(cached user) Found a legit creator, skipping him.')
+                    await window.cache(user_url, undefined, false)
+                    await window.cache(window.url, undefined, false)
                 }
 
-                window.markItemAsCached($workshop_item)
-            } else {
-                // Making a request to the user page to get the steamid64.
-                const user_profile_page_html = await fetch(user_profile_url).then((res) => res.text())
-                const g_rgProfileData = window.getProfileObject(user_profile_page_html)
+                continue
+            }
 
-                const {personaname, steamid} = g_rgProfileData
+            // Getting the steam_id.
+            try {
+                const response = await fetch(user_url);
+                const html = await response.text();
+                const object = getProfileObject(html);
 
-                if (window.isEmporiumMember(steamid)) {
-                    console.warn(`'${workshop_item_name}' includes '${personaname}' which is an Emporium member, flagging the item.`)
-                    window.flagItem($workshop_item)
+                const steam_id = object['steamid']
+                if (window.isEmporiumMember(steam_id)) {
+                    console.log('Found a non-cached Emporium member, flagging him and the page.')
 
-                    await window.cache(workshop_item_url, undefined, true)
-                    await window.cache(user_profile_url, steamid, true)
+                    window.flagCreator($J(profile), steam_id)
+                    window.flagPage()
+
+                    await window.cache(user_url, steam_id, true)
+                    await window.cache(window.url, undefined, true)
                 } else {
-                    console.log(`'${workshop_item_name}' includes '${personaname}' which is a legit creator, searching for the next creator.`)
+                    console.log('Found a legit creator, skipping him.')
 
-                    await window.cache(workshop_item_url, undefined, false)
-                    await window.cache(user_profile_url, steamid, false)
+                    await window.cache(user_url, steam_id, false)
+                    await window.cache(window.url, undefined, false)
                 }
-
-                window.markItemAsCached($workshop_item)
+            } catch (error) {
+                console.error('Error fetching profile:', error);
             }
         }
     }
@@ -362,6 +422,12 @@ const workshop_item_notification_html = `<div class="detailBox altFooter"><div c
                             await new Promise((resolve) => setTimeout(resolve, 100))
                         }
                     }
+                }
+
+                const $creators_block = $J('#rightContents .creatorsBlock')
+                // If found, then it's a workshop item page.
+                if ($creators_block.length > 0) {
+                    await window.verifyCreatorsOnThisPage()
                 }
 
                 return resolve()
