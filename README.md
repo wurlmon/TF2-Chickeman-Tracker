@@ -9,4 +9,4 @@ A browser extension that notifies you if a TF2 Workshop item contains a member o
 
 ### How can I help?
 
-You can help me by searching for the Emporium member profiles and sharing them with me.  
+You can spread awareness of the existence of this plugin and send any profiles you suspect to be either Drew or Metabolic with evidence at Bigboigames through sending a friend request to him on discord @bigboigames or by emailing at bigboigamesyt@gmail.com.
