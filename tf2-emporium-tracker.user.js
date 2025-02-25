@@ -4,6 +4,7 @@
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/*
+// @match        https://www.steamcommunity.com/*
 // @grant        none
 // ==/UserScript==
 
