@@ -3,10 +3,9 @@
 A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 
 ### How to Install
+Tutorial: https://youtu.be/HwGFxiaTwDk 
 
-- Install
-Tutorial: https://youtu.be/HwGFxiaTwDk
- [Tampermonkey](https://www.tampermonkey.net/)
+- Install [Tampermonkey](https://www.tampermonkey.net/)
 - Install [TF2 Emporium Tracker](https://raw.githubusercontent.com/EurekaEffect/TF2-Emporium-Tracker/refs/heads/main/tf2-emporium-tracker.user.js)
 
 ### How can I help?
