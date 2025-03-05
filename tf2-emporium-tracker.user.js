@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TF2 Emporium Tracker
-// @version      19.02.2025 19:29
+// @version      1.0.0
 // @description  A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid their content.
 // @author       https://steamcommunity.com/id/EurekaEffect/
 // @match        https://steamcommunity.com/*
