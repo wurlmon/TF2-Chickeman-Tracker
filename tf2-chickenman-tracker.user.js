@@ -18,31 +18,36 @@ const workshop_item_notification_html = `
   <div class="detailBox altFooter" style="background: #222; padding: 16px;">
     <div class="workshopItemDescriptionTitle" style="font-family: 'Motiva Sans',Arial,Helvetica,sans-serif;color: white;font-size: 18px;display: flex;justify-content: center;">
       <span style="text-align: center;text-transform: none;">
-        This Workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.
+        This Workshop submission has been worked on by Chickenman. Below is evidence detailing the things he has done.
       </span>
     </div>
     <div class="workshopItemDescription" id="highlightContent" style="display: flex; flex-direction: row; align-items: center; gap: 24px; margin-top: 12px; justify-content: center;">
       <img src="${warning_image}" alt="Warning" style="max-height: 80px;">
       <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      
         <img src="${void_image}" alt="Chickenman" style="max-height: 100px;">
         <img src="${thumbnail_1_image}" alt="Thumbnail 1" style="max-height: 100px;">
         <img src="${thumbnail_2_image}" alt="Thumbnail 2" style="max-height: 100px;">
+                <a href="https://example.com" target="_blank" style="color: skyblue; margin-top: 12px;">More info here</a>
       </div>
       <img src="${warning_image}" alt="Warning" style="max-height: 80px;">
     </div>
   </div>
 `;
 
+
 (async function () {
     'use strict'
+    
 
     window.$J = $J // Re-defining, so IDE won't cry about it.
     window.url = document.location.href
 
     window.is_page_flagged = false
-    window.Chickenman_members = {
+    window.Chickenman = {
         '76561198039877070': 'Chickenman'
     }
+
 
     // Method returns an array of objects that contains the cached data of fetched workshop items.
     window.getCache = function () {
@@ -92,7 +97,7 @@ const workshop_item_notification_html = `
     }
 
     window.isChickenmanMember = function (steam_id) {
-        return (steam_id in window.Chickenman_members)
+        return (steam_id in window.Chickenman)
     }
     window.getProfileObject = function (html) {
         let profileData = null;
@@ -149,7 +154,7 @@ const workshop_item_notification_html = `
         })
     }
     window.flagCreator = function ($profile, steamid) {
-        $J(`<span style="color: red"> (${window.Chickenman_members[steamid]})</span>`).insertBefore($profile.find('br'))
+        $J(`<span style="color: red"> (${window.Chickenman[steamid]})</span>`).insertBefore($profile.find('br'))
 
         $profile.css('background', 'rgba(255, 0, 0, 0.2)')
     }
@@ -160,7 +165,7 @@ const workshop_item_notification_html = `
 
         $J('.detailBox.plain').prepend($J(workshop_item_notification_html))
 
-        $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal named Chickenman. Please, do not vote for this submission.</span></div>`);
+        $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by Chickenman. Please, do not vote for this submission.</span></div>`);
         $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.3)');
     }
 
@@ -301,7 +306,7 @@ const workshop_item_notification_html = `
             const $workshop_item_page_html = $J(workshop_item_page_html)
 
             const $creators_block = $workshop_item_page_html.find('.creatorsBlock')
-            const $creators = $creators_block.find('.friendBlock') // I wonder why did they call creators as 'friends', since he's got no friends'.
+            const $creators = $creators_block.find('.friendBlock') // I wonder why did they call creators as 'friends', since he's got no friends.
 
             for (let i = 0; i < $creators.length; i++) {
                 const $profile = $J($creators.get(i))
@@ -332,7 +337,7 @@ const workshop_item_notification_html = `
                     const {personaname, steamid} = g_rgProfileData
 
                     if (window.isChickenmanMember(steamid)) {
-                        console.warn(`'${workshop_item_name}' includes '${personaname}' which is an Chickenman member, flagging the item.`)
+                        console.warn(`'${workshop_item_name}' includes '${personaname}' which is  Chickenman, flagging the item.`)
                         window.flagItem($workshop_item)
 
                         await window.cache(workshop_item_url, undefined, true)

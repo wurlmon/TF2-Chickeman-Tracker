@@ -1,8 +1,10 @@
+### Notice
+
+This plugin is forked in a jokingly manner and is not aimed to incriminate Chickenman in anything.
+
 ### TF2-Chickenman-Tracker
 
-A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid his content.
-
-
+A browser extension that notifies you if a TF2 Workshop item that was (co-) made by Chickenman, helping you avoid his content.
 
 ### How to Install
 Tutorial: https://youtu.be/HwGFxiaTwDk 
