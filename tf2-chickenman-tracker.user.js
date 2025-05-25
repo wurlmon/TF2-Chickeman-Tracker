@@ -12,6 +12,7 @@
 const void_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/chickenman.png?raw=true';
 const thumbnail_1_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/thumbnail_1.png?raw=true';
 const thumbnail_2_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/thumbnail_2.png?raw=true';
+const warning_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/warning.gif?raw=true';
 
 const workshop_item_notification_html = `
   <div class="detailBox altFooter" style="background: #222; padding: 16px;">
@@ -20,10 +21,14 @@ const workshop_item_notification_html = `
         This Workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.
       </span>
     </div>
-    <div class="workshopItemDescription" id="highlightContent" style="display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 12px;">
-      <img src="${void_image}" alt="Chickenman" style="max-height: 100px;">
-      <img src="${thumbnail_1_image}" alt="Thumbnail 1" style="max-height: 100px;">
-      <img src="${thumbnail_2_image}" alt="Thumbnail 2" style="max-height: 100px;">
+    <div class="workshopItemDescription" id="highlightContent" style="display: flex; flex-direction: row; align-items: center; gap: 24px; margin-top: 12px; justify-content: center;">
+      <img src="${warning_image}" alt="Warning" style="max-height: 80px;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+        <img src="${void_image}" alt="Chickenman" style="max-height: 100px;">
+        <img src="${thumbnail_1_image}" alt="Thumbnail 1" style="max-height: 100px;">
+        <img src="${thumbnail_2_image}" alt="Thumbnail 2" style="max-height: 100px;">
+      </div>
+      <img src="${warning_image}" alt="Warning" style="max-height: 80px;">
     </div>
   </div>
 `;
@@ -155,7 +160,7 @@ const workshop_item_notification_html = `
 
         $J('.detailBox.plain').prepend($J(workshop_item_notification_html))
 
-        $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal from the Chickenman group. Please, do not vote for this submission.</span></div>`);
+        $J('.workshopItemDetailsHeader').prepend(`<div class="workshopItemTitle" style="display: flex;align-items: center;color: rgba(255, 0, 0, 1);flex-direction: column;"><span style="text-align: center;/*! font-size: 24px; */">This Workshop Submission has been worked on by a criminal named Chickenman. Please, do not vote for this submission.</span></div>`);
         $J('.workshop_item_header').css('background', 'rgba(255, 0, 0, 0.3)');
     }
 
