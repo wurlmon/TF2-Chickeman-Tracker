@@ -1,18 +1,32 @@
 // ==UserScript==
 // @name         TF2 Chickenman Tracker
-// @version      1.0.0
-// @description  A browser extension that notifies you if a TF2 Workshop item was (co-)made by Chickenman group, helping you avoid his content.
-// @author       https://steamcommunity.com/id/EurekaEffect/
-// @author       https://steamcommunity.com/id/wurlmon
-// @match        https://steamcommunity.com/*
-// @match        https://www.steamcommunity.com/*
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Notifies you if a TF2 Workshop item contains a member of Emporium group
+// @author       YourName
+// @match        *://steamcommunity.com/*
 // @grant        none
 // ==/UserScript==
+
 
 const void_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/chickenman.png?raw=true';
 const thumbnail_1_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/thumbnail_1.png?raw=true';
 const thumbnail_2_image = 'https://github.com/wurlmon/TF2-Chickenman-Tracker/blob/main/assets/thumbnail_2.png?raw=true';
 
+const workshop_item_notification_html = `
+  <div class="detailBox altFooter" style="background: #222; padding: 16px;">
+    <div class="workshopItemDescriptionTitle" style="font-family: 'Motiva Sans',Arial,Helvetica,sans-serif;color: white;font-size: 18px;display: flex;justify-content: center;">
+      <span style="text-align: center;text-transform: none;">
+        This Workshop submission has been worked on by a criminal. Below is evidence detailing the things they have done.
+      </span>
+    </div>
+    <div class="workshopItemDescription" id="highlightContent" style="display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 12px;">
+      <img src="${void_image}" alt="Chickenman" style="max-height: 100px;">
+      <img src="${thumbnail_1_image}" alt="Thumbnail 1" style="max-height: 100px;">
+      <img src="${thumbnail_2_image}" alt="Thumbnail 2" style="max-height: 100px;">
+    </div>
+  </div>
+`;
 
 (async function () {
     'use strict'
