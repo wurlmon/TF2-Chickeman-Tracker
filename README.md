@@ -2,6 +2,9 @@
 
 A browser extension that notifies you if a TF2 Workshop item contains a member of Emporium group, helping you avoid his content.
 
+### Based on:
+https://github.com/EurekaEffect/TF2-Emporium-Tracker
+
 ### How to Install
 Tutorial: https://youtu.be/HwGFxiaTwDk 
 
